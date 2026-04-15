@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Город</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .city-header {
+            position: relative;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .city-name {
+            font-size: 48px;
+            color: #5a3a1a;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .photo-area {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .city-photo {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            background: #d4a373;
+        }
+        
+        .vertical-dots {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #8B4513;
+            border-radius: 50%;
+            box-shadow: 0 0 3px rgba(0,0,0,0.3);
+        }
+        
+        .photo-menu {
+            position: absolute;
+            right: 15px;
+            top: 45px;
+            background: #f5e6d3;
+            border: 1px solid #8B4513;
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            z-index: 20;
+        }
+        
+        .photo-menu button {
+            background: #8B4513;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .notes-container {
+            margin-top: 30px;
+        }
+        
+        .note-block {
+            background: #3d3228;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e6c87a;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        
+        .note-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .note-title input {
+            flex: 1;
+            background: #5a4a3a;
+            border: 1px solid #e6c87a;
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #f5e6d3;
+            font-size: 16px;
+        }
+        
+        .small-plus {
+            width: 25px;
+            height: 25px;
+            background: #e6c87a;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            color: #3d3228;
+            transition: 0.2s;
+        }
+        
+        .small-plus:hover {
+            transform: scale(1.1);
+            background: #FFD700;
+        }
+        
+        .note-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .note-text {
+            width: 100%;
+            min-height: 100px;
+            background: #2a221c;
+            border: 1px solid #e6c87a;
+            border-radius: 15px;
+            padding: 12px;
+            color: #f5e6d3;
+            font-family: inherit;
+            resize: vertical;
+        }
+        
+        .images-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        
+        .city-image {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 2px solid #e6c87a;
+            cursor: pointer;
+        }
+        
+        .add-image-btn {
+            width: 120px;
+            height: 120px;
+            background: #5a4a3a;
+            border: 2px dashed #e6c87a;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            color: #e6c87a;
+        }
+        
+        .big-plus {
+            width: 40px;
+            height: 40px;
+            background: #e6c87a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            cursor: pointer;
+            margin: 20px auto 0;
+            transition: 0.2s;
+            color: #3d3228;
+        }
+        
+        .big-plus:hover {
+            transform: scale(1.1);
+        }
+        
+        .back-btn {
+            background: #8B4513;
+            color: #FFD700;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="city-header">
+            <h1 class="city-name" id="cityName">Город</h1>
+        </div>
+        
+        <div class="photo-area">
+            <img id="cityPhoto" class="city-photo" src="https://via.placeholder.com/800x300?text=Фото+города" alt="Фото города">
+            <div class="vertical-dots" id="photoDots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+            <div class="photo-menu" id="photoMenu">
+                <button onclick="changePhoto()">📷 Изменить фото</button>
+            </div>
+        </div>
+        
+        <div class="notes-container" id="notesContainer"></div>
+        
+        <div class="big-plus" onclick="addNewNote()">+</div>
+        
+        <button class="back-btn" onclick="goBack()">← Вернуться к карте</button>
+    </div>
+
+    <script>
+        let currentCity = '';
+        let notes = [];
+        
+        function loadCityData() {
+            currentCity = localStorage.getItem('current_city') || 'Город';
+            document.getElementById('cityName').textContent = currentCity;
+            
+            // Загружаем заметки для города
+            const saved = localStorage.getItem(`city_notes_${currentCity}`);
+            if (saved) {
+                notes = JSON.parse(saved);
+            } else {
+                notes = [{
+                    title: 'Мой первый день',
+                    text: 'Расскажите о вашем путешествии...',
+                    images: []
+                }];
+            }
+            renderNotes();
+            
+            // Загружаем фото
+            const savedPhoto = localStorage.getItem(`city_photo_${currentCity}`);
+            if (savedPhoto) {
+                document.getElementById('cityPhoto').src = savedPhoto;
+            }
+        }
+        
+        function renderNotes() {
+            const container = document.getElementById('notesContainer');
+            container.innerHTML = '';
+            
+            notes.forEach((note, index) => {
+                const noteDiv = document.createElement('div');
+                noteDiv.className = 'note-block';
+                
+                // Заголовок с плюсиком
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'note-title';
+                const titleInput = document.createElement('input');
+                titleInput.value = note.title;
+                titleInput.placeholder = 'Название';
+                titleInput.onchange = (e) => {
+                    notes[index].title = e.target.value;
+                    saveNotes();
+                };
+                const smallPlus = document.createElement('div');
+                smallPlus.className = 'small-plus';
+                smallPlus.textContent = '+';
+                smallPlus.onclick = () => addNewNote();
+                titleDiv.appendChild(titleInput);
+                titleDiv.appendChild(smallPlus);
+                
+                // Контент
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'note-content';
+                
+                const textarea = document.createElement('textarea');
+                textarea.className = 'note-text';
+                textarea.value = note.text;
+                textarea.onchange = (e) => {
+                    notes[index].text = e.target.value;
+                    saveNotes();
+                };
+                
+                const imagesDiv = document.createElement('div');
+                imagesDiv.className = 'images-grid';
+                
+                note.images.forEach((imgSrc, imgIdx) => {
+                    const img = document.createElement('img');
+                    img.src = imgSrc;
+                    img.className = 'city-image';
+                    img.onclick = () => {
+                        if (confirm('Удалить фото?')) {
+                            notes[index].images.splice(imgIdx, 1);
+                            saveNotes();
+                            renderNotes();
+                        }
+                    };
+                    imagesDiv.appendChild(img);
+                });
+                
+                const addImgBtn = document.createElement('div');
+                addImgBtn.className = 'add-image-btn';
+                addImgBtn.textContent = '+';
+                addImgBtn.onclick = () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                notes[index].images.push(event.target.result);
+                                saveNotes();
+                                renderNotes();
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    };
+                    input.click();
+                };
+                imagesDiv.appendChild(addImgBtn);
+                
+                contentDiv.appendChild(textarea);
+                contentDiv.appendChild(imagesDiv);
+                noteDiv.appendChild(titleDiv);
+                noteDiv.appendChild(contentDiv);
+                container.appendChild(noteDiv);
+            });
+        }
+        
+        function addNewNote() {
+            notes.push({
+                title: 'Новая заметка',
+                text: '',
+                images: []
+            });
+            saveNotes();
+            renderNotes();
+        }
+        
+        function saveNotes() {
+            localStorage.setItem(`city_notes_${currentCity}`, JSON.stringify(notes));
+        }
+        
+        function changePhoto() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const photoUrl = event.target.result;
+                        document.getElementById('cityPhoto').src = photoUrl;
+                        localStorage.setItem(`city_photo_${currentCity}`, photoUrl);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+        
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+        
+        // Меню для трёх точек
+        document.getElementById('photoDots').addEventListener('click', () => {
+            const menu = document.getElementById('photoMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        });
+        
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.photo-area')) {
+                document.getElementById('photoMenu').style.display = 'none';
+            }
+        });
+        
+        loadCityData();
+    </script>
+</body>
+</html>

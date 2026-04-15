@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта путешествий</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Дополнительные стили только для карты */
+        .map-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #d9c5a7;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        #russia-map {
+            width: 100%;
+            background: #c4b28a;
+            border-radius: 20px;
+            cursor: crosshair;
+            min-height: 500px;
+            position: relative;
+            background-image: radial-gradient(circle at 10% 20%, #b8a77d 1px, transparent 1px);
+            background-size: 30px 30px;
+        }
+        
+        /* Холст для рисования карты */
+        #map-canvas {
+            width: 100%;
+            height: auto;
+            background: #e8dcc0;
+            border-radius: 20px;
+            display: block;
+        }
+        
+        .city-point {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #FFD700;
+            border: 2px solid #8B4513;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: transform 0.2s;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .city-point:hover {
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+        
+        .city-label {
+            position: absolute;
+            background: rgba(139, 69, 19, 0.9);
+            color: #FFD700;
+            padding: 2px 8px;
+            border-radius: 15px;
+            font-size: 12px;
+            white-space: nowrap;
+            transform: translate(10px, -20px);
+            pointer-events: none;
+            font-family: monospace;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .travel-btn {
+            background: #8B4513;
+            color: #FFD700;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .travel-btn:hover {
+            background: #5a2d0c;
+            transform: scale(1.05);
+        }
+        
+        .info-text {
+            text-align: center;
+            color: #5a3a1a;
+            margin-top: 15px;
+            font-style: italic;
+        }
+        
+        .city-dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #f5e6d3;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+            border: 2px solid #d4a373;
+        }
+        
+        .city-dialog input {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #d4a373;
+            border-radius: 10px;
+            width: 200px;
+        }
+        
+        .city-dialog button {
+            background: #8B4513;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ Карта путешествий</h1>
+        <p class="subtitle">Кликните на карту, чтобы добавить город</p>
+        
+        <div class="map-container">
+            <div id="russia-map" style="position: relative; min-height: 500px;">
+                <svg id="map-canvas" viewBox="0 0 1000 600" style="width:100%; height:auto; background:#e8dcc0; border-radius:20px;">
+                    <!-- Упрощённый контур России -->
+                    <path d="M200,80 L350,60 L500,70 L650,90 L750,120 L850,180 L880,250 L850,320 L750,380 
+                             L650,420 L550,450 L450,460 L350,440 L280,400 L220,350 L180,280 L160,200 L180,120 Z" 
+                          fill="#c4b28a" stroke="#8B4513" stroke-width="3" opacity="0.6"/>
+                    <!-- Реки -->
+                    <path d="M300,150 Q350,200 320,280 Q300,350 350,420" fill="none" stroke="#6ba3b8" stroke-width="4" opacity="0.7"/>
+                    <path d="M600,100 Q620,180 580,260 Q550,330 600,400" fill="none" stroke="#6ba3b8" stroke-width="3" opacity="0.6"/>
+                    <!-- Озёра -->
+                    <ellipse cx="700" cy="250" rx="40" ry="25" fill="#7fb4c4" opacity="0.6"/>
+                    <ellipse cx="250" cy="300" rx="30" ry="20" fill="#7fb4c4" opacity="0.5"/>
+                </svg>
+                <div id="cities-container"></div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="travel-btn" onclick="clearAllCities()">🗑️ Очистить все города</button>
+            <a href="travel-map.html" class="travel-btn">🗺️ Карта путешествия →</a>
+            <a href="organizer.html" class="travel-btn">📁 Органайзер →</a>
+        </div>
+        <div class="info-text">
+            💡 Подсказка: нажмите в любом месте карты, чтобы добавить город
+        </div>
+    </div>
+    
+    <div class="overlay" id="overlay"></div>
+    <div class="city-dialog" id="cityDialog">
+        <h3>Новый город</h3>
+        <input type="text" id="cityNameInput" placeholder="Название города">
+        <br>
+        <button onclick="saveCity()">✅ Добавить</button>
+        <button onclick="closeDialog()">❌ Отмена</button>
+    </div>
+
+    <script>
+        // Загрузка городов из localStorage
+        let cities = [];
+        
+        function loadCities() {
+            const saved = localStorage.getItem('travel_cities');
+            if (saved) {
+                cities = JSON.parse(saved);
+                renderCities();
+            }
+        }
+        
+        function saveCitiesToStorage() {
+            localStorage.setItem('travel_cities', JSON.stringify(cities));
+        }
+        
+        function renderCities() {
+            const container = document.getElementById('cities-container');
+            container.innerHTML = '';
+            
+            cities.forEach(city => {
+                // Точка
+                const point = document.createElement('div');
+                point.className = 'city-point';
+                point.style.left = city.x + 'px';
+                point.style.top = city.y + 'px';
+                point.onclick = (e) => {
+                    e.stopPropagation();
+                    openCityPage(city.name);
+                };
+                container.appendChild(point);
+                
+                // Подпись
+                const label = document.createElement('div');
+                label.className = 'city-label';
+                label.style.left = city.x + 'px';
+                label.style.top = (city.y - 15) + 'px';
+                label.textContent = city.name;
+                container.appendChild(label);
+            });
+        }
+        
+        let pendingPoint = null;
+        
+        document.getElementById('russia-map').addEventListener('click', (e) => {
+            const rect = document.getElementById('russia-map').getBoundingClientRect();
+            const scaleX = 1000 / rect.width; // соответствие с SVG viewBox
+            const scaleY = 600 / rect.height;
+            
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            // Примерное преобразование
+            x = (x / rect.width) * 1000;
+            y = (y / rect.height) * 600;
+            
+            pendingPoint = { x, y };
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('cityDialog').style.display = 'block';
+            document.getElementById('cityNameInput').value = '';
+        });
+        
+        function saveCity() {
+            const name = document.getElementById('cityNameInput').value.trim();
+            if (name && pendingPoint) {
+                cities.push({
+                    name: name,
+                    x: pendingPoint.x,
+                    y: pendingPoint.y
+                });
+                saveCitiesToStorage();
+                renderCities();
+            }
+            closeDialog();
+        }
+        
+        function closeDialog() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('cityDialog').style.display = 'none';
+            pendingPoint = null;
+        }
+        
+        function clearAllCities() {
+            if (confirm('Удалить все города?')) {
+                cities = [];
+                saveCitiesToStorage();
+                renderCities();
+            }
+        }
+        
+        function openCityPage(cityName) {
+            // Сохраняем имя города и переходим на страницу города
+            localStorage.setItem('current_city', cityName);
+            window.location.href = 'city.html';
+        }
+        
+        loadCities();
+    </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Карта путешествия</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .travel-map-container {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #8ba86b;
+            border-radius: 30px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        #fantasy-map {
+            width: 100%;
+            background: #7da064;
+            border-radius: 20px;
+            cursor: crosshair;
+            position: relative;
+            min-height: 500px;
+        }
+        
+        .map-svg {
+            width: 100%;
+            height: auto;
+            background: #8fba6e;
+            border-radius: 20px;
+            display: block;
+        }
+        
+        .travel-point {
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background: #FFD700;
+            border: 2px solid #8B4513;
+            border-radius: 50%;
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            transition: 0.2s;
+            z-index: 10;
+        }
+        
+        .travel-point:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+        
+        .dashed-line {
+            position: absolute;
+            height: 2px;
+            background: repeating-linear-gradient(90deg, #8B4513, #8B4513 10px, transparent 10px, transparent 20px);
+            transform-origin: 0 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .point-label {
+            position: absolute;
+            background: #8B4513;
+            color: #FFD700;
+            padding: 2px 8px;
+            border-radius: 15px;
+            font-size: 11px;
+            white-space: nowrap;
+            transform: translate(12px, -20px);
+            pointer-events: none;
+        }
+        
+        .travel-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .travel-name-area {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .travel-name-input {
+            background: #3d3228;
+            border: 2px solid #e6c87a;
+            border-radius: 15px;
+            padding: 10px 20px;
+            font-size: 24px;
+            color: #f5e6d3;
+            text-align: center;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .add-trip-btn {
+            background: #8B4513;
+            color: #FFD700;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        
+        .trips-list {
+            margin-top: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .trip-card {
+            background: #f5e6d3;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid #8B4513;
+        }
+        
+        .trip-card:hover {
+            transform: scale(1.05);
+            background: #e6c87a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="travel-name-area">
+            <input type="text" id="travelNameInput" class="travel-name-input" placeholder="Название путешествия">
+        </div>
+        
+        <div class="travel-map-container">
+            <div id="fantasy-map" style="position: relative;">
+                <svg class="map-svg" viewBox="0 0 1000 600">
+                    <!-- Рисованная зелёная поверхность -->
+                    <rect width="1000" height="600" fill="#8fba6e"/>
+                    <!-- Возвышенности -->
+                    <ellipse cx="200" cy="150" rx="80" ry="50" fill="#6b8c42" opacity="0.7"/>
+                    <ellipse cx="700" cy="200" rx="100" ry="60" fill="#5a7a36" opacity="0.6"/>
+                    <ellipse cx="500" cy="400" rx="90" ry="45" fill="#7da64a" opacity="0.5"/>
+                    <!-- Низины -->
+                    <ellipse cx="800" cy="450" rx="70" ry="40" fill="#a8c98a" opacity="0.6"/>
+                    <ellipse cx="300" cy="500" rx="60" ry="35" fill="#b8da8f" opacity="0.5"/>
+                    <!-- Река -->
+                    <path d="M100,300 Q200,280 300,320 Q400,360 500,330 Q600,300 700,350 Q800,400 900,370" 
+                          fill="none" stroke="#5a9ebb" stroke-width="8" opacity="0.8"/>
+                    <path d="M300,320 Q350,380 380,450" fill="none" stroke="#5a9ebb" stroke-width="5" opacity="0.7"/>
+                    <!-- Лесные пятна -->
+                    <circle cx="150" cy="100" r="25" fill="#4a6b2a" opacity="0.5"/>
+                    <circle cx="850" cy="120" r="35" fill="#4a6b2a" opacity="0.4"/>
+                </svg>
+                <div id="points-container"></div>
+            </div>
+        </div>
+        
+        <div class="travel-controls">
+            <button class="travel-btn" onclick="clearAllPoints()">🗑️ Очистить все точки</button>
+            <button class="travel-btn" onclick="saveCurrentTrip()">💾 Сохранить путешествие</button>
+            <a href="index.html" class="travel-btn">← Главная</a>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button class="add-trip-btn" onclick="addNewTrip()">➕ Новое путешествие</button>
+        </div>
+        
+        <div id="tripsList" class="trips-list"></div>
+    </div>
+
+    <script>
+        let currentTripId = 'default_trip';
+        let trips = {};
+        let currentPoints = [];
+        
+        function loadTrips() {
+            const saved = localStorage.getItem('travel_map_trips');
+            if (saved) {
+                trips = JSON.parse(saved);
+            } else {
+                trips = {};
+            }
+            
+            // Загружаем список путешествий
+            renderTripsList();
+            
+            // Загружаем последнее активное
+            const lastTrip = localStorage.getItem('active_trip_id');
+            if (lastTrip && trips[lastTrip]) {
+                currentTripId = lastTrip;
+                currentPoints = trips[currentTripId].points || [];
+            } else if (Object.keys(trips).length > 0) {
+                currentTripId = Object.keys(trips)[0];
+                currentPoints = trips[currentTripId].points || [];
+            } else {
+                currentTripId = 'trip_' + Date.now();
+                trips[currentTripId] = { name: 'Моё путешествие', points: [] };
+                currentPoints = [];
+                saveAllTrips();
+            }
+            
+            document.getElementById('travelNameInput').value = trips[currentTripId].name || '';
+            renderPoints();
+        }
+        
+        function renderTripsList() {
+            const container = document.getElementById('tripsList');
+            container.innerHTML = '';
+            for (let id in trips) {
+                const card = document.createElement('div');
+                card.className = 'trip-card';
+                card.textContent = trips[id].name;
+                card.onclick = () => {
+                    currentTripId = id;
+                    currentPoints = trips[currentTripId].points || [];
+                    document.getElementById('travelNameInput').value = trips[currentTripId].name;
+                    renderPoints();
+                    localStorage.setItem('active_trip_id', currentTripId);
+                };
+                container.appendChild(card);
+            }
+        }
+        
+        function saveAllTrips() {
+            localStorage.setItem('travel_map_trips', JSON.stringify(trips));
+            renderTripsList();
+        }
+        
+        function saveCurrentTrip() {
+            const newName = document.getElementById('travelNameInput').value;
+            if (!trips[currentTripId]) {
+                trips[currentTripId] = { points: [] };
+            }
+            trips[currentTripId].name = newName || 'Без названия';
+            trips[currentTripId].points = currentPoints;
+            saveAllTrips();
+            alert('Сохранено!');
+        }
+        
+        function addNewTrip() {
+            const newId = 'trip_' + Date.now();
+            trips[newId] = { name: 'Новое путешествие', points: [] };
+            saveAllTrips();
+            currentTripId = newId;
+            currentPoints = [];
+            document.getElementById('travelNameInput').value = 'Новое путешествие';
+            renderPoints();
+            localStorage.setItem('active_trip_id', currentTripId);
+        }
+        
+        function renderPoints() {
+            const container = document.getElementById('points-container');
+            container.innerHTML = '';
+            
+            currentPoints.forEach((point, idx) => {
+                const dot = document.createElement('div');
+                dot.className = 'travel-point';
+                dot.style.left = point.x + 'px';
+                dot.style.top = point.y + 'px';
+                dot.onclick = (e) => {
+                    e.stopPropagation();
+                    if (confirm('Удалить точку?')) {
+                        currentPoints.splice(idx, 1);
+                        renderPoints();
+                        saveCurrentTrip();
+                    }
+                };
+                container.appendChild(dot);
+                
+                const label = document.createElement('div');
+                label.className = 'point-label';
+                label.style.left = point.x + 'px';
+                label.style.top = (point.y - 15) + 'px';
+                label.textContent = point.name || 'Точка';
+                container.appendChild(label);
+                
+                // Рисуем пунктирную линию к предыдущей точке
+                if (idx > 0) {
+                    const prev = currentPoints[idx-1];
+                    const line = document.createElement('div');
+                    line.className = 'dashed-line';
+                    const dx = point.x - prev.x;
+                    const dy = point.y - prev.y;
+                    const length = Math.sqrt(dx*dx + dy*dy);
+                    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                    line.style.width = length + 'px';
+                    line.style.left = prev.x + 'px';
+                    line.style.top = prev.y + 'px';
+                    line.style.transform = `rotate(${angle}deg)`;
+                    container.appendChild(line);
+                }
+            });
+        }
+        
+        document.getElementById('fantasy-map').addEventListener('click', (e) => {
+            const rect = document.getElementById('fantasy-map').getBoundingClientRect();
+            let x = e.clientX - rect.left;
+            let y = e.clientY - rect.top;
+            
+            const name = prompt('Название точки:', `Точка ${currentPoints.length + 1}`);
+            if (name) {
+                currentPoints.push({ x, y, name });
+                renderPoints();
+                saveCurrentTrip();
+            }
+        });
+        
+        function clearAllPoints() {
+            if (confirm('Удалить все точки на этой карте?')) {
+                currentPoints = [];
+                renderPoints();
+                saveCurrentTrip();
+            }
+        }
+        
+        loadTrips();
+    </script>
+</body>
+</html>

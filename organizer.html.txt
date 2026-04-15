@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Органайзер путешествий</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .folders-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        /* Стиль папок, лежащих друг на друге */
+        .folder {
+            background: #f5e6d3;
+            border-radius: 12px 12px 8px 8px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.1), 0 5px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+        
+        .folder:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 11px 0 rgba(0,0,0,0.1), 0 8px 20px rgba(0,0,0,0.2);
+        }
+        
+        /* Язычок папки */
+        .folder::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            width: 60px;
+            height: 12px;
+            background: inherit;
+            border-radius: 8px 8px 0 0;
+            filter: brightness(0.85);
+        }
+        
+        .folder-header {
+            padding: 15px 20px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .folder-content {
+            padding: 20px;
+            background: #faf3e8;
+            border-radius: 0 0 8px 8px;
+            display: none;
+            border-top: 2px solid rgba(0,0,0,0.1);
+        }
+        
+        .folder.open .folder-content {
+            display: block;
+        }
+        
+        /* Цвета папок */
+        .folder:nth-child(1) .folder-header { background: #4a7c8f; }  /* билеты - синий */
+        .folder:nth-child(2) .folder-header { background: #b5651e; }  /* отель - оранжево-коричневый */
+        .folder:nth-child(3) .folder-header { background: #6b4e71; }  /* список - фиолетовый */
+        .folder:nth-child(4) .folder-header { background: #8b5e3c; }  /* финансы - коричневый */
+        
+        /* Стили для содержимого папок */
+        .tickets-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .ticket-photos {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .ticket-img {
+            width: 150px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid #d4a373;
+            cursor: pointer;
+        }
+        
+        .add-ticket-btn {
+            width: 150px;
+            height: 100px;
+            background: #e8d5c0;
+            border: 2px dashed #8B4513;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            cursor: pointer;
+            color: #8B4513;
+        }
+        
+        .check-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #8B4513;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        
+        .check-circle.checked {
+            background: #4CAF50;
+            border-color: #2e7d32;
+        }
+        
+        .check-circle.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .hotel-info {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .hotel-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .hotel-field label {
+            font-weight: bold;
+            color: #5a3a1a;
+        }
+        
+        .hotel-field input, .hotel-field textarea {
+            padding: 10px;
+            border: 1px solid #d4a373;
+            border-radius: 10px;
+            background: white;
+            font-family: inherit;
+        }
+        
+        .hotel-field textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        /* Список вещей */
+        .checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f5e6d3;
+            padding: 8px 12px;
+            border-radius: 12px;
+        }
+        
+        .checklist-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #8B4513;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .checklist-circle.checked {
+            background: #4CAF50;
+            border-color: #2e7d32;
+        }
+        
+        .checklist-circle.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 18px;
+        }
+        
+        .checklist-text {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+            border-bottom: 1px dashed #d4a373;
+        }
+        
+        .checklist-text:focus {
+            outline: none;
+            border-bottom-color: #8B4513;
+        }
+        
+        .delete-item {
+            color: #b5651e;
+            cursor: pointer;
+            font-size: 20px;
+            padding: 0 8px;
+            opacity: 0.6;
+        }
+        
+        .delete-item:hover {
+            opacity: 1;
+        }
+        
+        .add-item-btn {
+            background: #8B4513;
+            color: #FFD700;
+            border: none;
+            border-radius: 25px;
+            padding: 8px 16px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: fit-content;
+        }
+        
+        /* Финансы */
+        .finance-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .finance-table th, .finance-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #d4a373;
+        }
+        
+        .finance-table th {
+            background: #e8d5c0;
+            color: #5a3a1a;
+        }
+        
+        .finance-table input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #d4a373;
+            border-radius: 5px;
+        }
+        
+        .total-row {
+            font-weight: bold;
+            background: #e8d5c0;
+        }
+        
+        .nav-buttons {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📁 Органайзер путешествий</h1>
+        <p class="subtitle">Нажмите на папку, чтобы открыть</p>
+        
+        <div class="folders-container">
+            <!-- Папка 1: Билеты -->
+            <div class="folder" id="ticketsFolder">
+                <div class="folder-header">
+                    🎫 БИЛЕТЫ
+                </div>
+                <div class="folder-content">
+                    <div class="tickets-area">
+                        <div class="ticket-photos" id="ticketPhotos"></div>
+                        <div class="check-circle" id="ticketsCheckCircle"></div>
+                        <small style="color:#8B4513;">✓ Нажмите на кружок, если взяли билеты с собой</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Папка 2: Отель -->
+            <div class="folder" id="hotelFolder">
+                <div class="folder-header">
+                    🏨 ОТЕЛЬ
+                </div>
+                <div class="folder-content">
+                    <div class="hotel-info">
+                        <div class="hotel-field">
+                            <label>Название отеля</label>
+                            <input type="text" id="hotelName" placeholder="Например: Hilton Garden Inn">
+                        </div>
+                        <div class="hotel-field">
+                            <label>Адрес</label>
+                            <input type="text" id="hotelAddress" placeholder="Улица, дом, город">
+                        </div>
+                        <div class="hotel-field">
+                            <label>Даты проживания</label>
+                            <input type="text" id="hotelDates" placeholder="10.05.2025 - 17.05.2025">
+                        </div>
+                        <div class="hotel-field">
+                            <label>Заметки</label>
+                            <textarea id="hotelNotes" placeholder="Номер комнаты, пароль от Wi-Fi, особенности..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Папка 3: Список вещей -->
+            <div class="folder" id="packingFolder">
+                <div class="folder-header">
+                    🧳 СПИСОК ВЕЩЕЙ
+                </div>
+                <div class="folder-content">
+                    <div class="checklist" id="checklist"></div>
+                    <button class="add-item-btn" onclick="addChecklistItem()">+ Добавить вещь</button>
+                </div>
+            </div>
+            
+            <!-- Папка 4: Финансы -->
+            <div class="folder" id="financeFolder">
+                <div class="folder-header">
+                    💰 ФИНАНСЫ
+                </div>
+                <div class="folder-content">
+                    <table class="finance-table" id="financeTable">
+                        <thead>
+                            <tr><th>Статья расходов</th><th>Сумма (₽)</th><th></th></tr>
+                        </thead>
+                        <tbody id="financeBody">
+                            <tr><td><input type="text" placeholder="Билеты"></td><td><input type="number" placeholder="0"></td><td style="width:30px"><span class="delete-item" onclick="deleteFinanceRow(this)">✖</span></td></tr>
+                            <tr><td><input type="text" placeholder="Отель"></td><td><input type="number" placeholder="0"></td><td style="width:30px"><span class="delete-item" onclick="deleteFinanceRow(this)">✖</span></td></tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="total-row"><td>ИТОГО:</td><td id="totalSum">0</td><td></td></tr>
+                            <tr><td colspan="3"><button class="add-item-btn" onclick="addFinanceRow()" style="margin-top:5px">+ Добавить расход</button></td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="index.html" class="travel-btn">← Главная карта</a>
+            <a href="travel-map.html" class="travel-btn">🗺️ Карта путешествия →</a>
+        </div>
+    </div>
+
+    <script>
+        // ========== БИЛЕТЫ ==========
+        let ticketImages = [];
+        let ticketsChecked = false;
+        
+        function loadTicketsData() {
+            const savedImages = localStorage.getItem('ticket_images');
+            if (savedImages) ticketImages = JSON.parse(savedImages);
+            const savedChecked = localStorage.getItem('tickets_checked');
+            ticketsChecked = savedChecked === 'true';
+            renderTicketPhotos();
+            renderTicketsCheck();
+        }
+        
+        function renderTicketPhotos() {
+            const container = document.getElementById('ticketPhotos');
+            container.innerHTML = '';
+            ticketImages.forEach((imgSrc, idx) => {
+                const img = document.createElement('img');
+                img.src = imgSrc;
+                img.className = 'ticket-img';
+                img.onclick = () => {
+                    if (confirm('Удалить фото билета?')) {
+                        ticketImages.splice(idx, 1);
+                        saveTicketImages();
+                        renderTicketPhotos();
+                    }
+                };
+                container.appendChild(img);
+            });
+            const addBtn = document.createElement('div');
+            addBtn.className = 'add-ticket-btn';
+            addBtn.textContent = '+';
+            addBtn.onclick = () => {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = 'image/*';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            ticketImages.push(event.target.result);
+                            saveTicketImages();
+                            renderTicketPhotos();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                };
+                input.click();
+            };
+            container.appendChild(addBtn);
+        }
+        
+        function saveTicketImages() {
+            localStorage.setItem('ticket_images', JSON.stringify(ticketImages));
+        }
+        
+        function renderTicketsCheck() {
+            const circle = document.getElementById('ticketsCheckCircle');
+            if (ticketsChecked) {
+                circle.classList.add('checked');
+            } else {
+                circle.classList.remove('checked');
+            }
+            circle.onclick = () => {
+                ticketsChecked = !ticketsChecked;
+                localStorage.setItem('tickets_checked', ticketsChecked);
+                renderTicketsCheck();
+            };
+        }
+        
+        // ========== ОТЕЛЬ ==========
+        function loadHotelData() {
+            document.getElementById('hotelName').value = localStorage.getItem('hotel_name') || '';
+            document.getElementById('hotelAddress').value = localStorage.getItem('hotel_address') || '';
+            document.getElementById('hotelDates').value = localStorage.getItem('hotel_dates') || '';
+            document.getElementById('hotelNotes').value = localStorage.getItem('hotel_notes') || '';
+            
+            document.getElementById('hotelName').onchange = () => localStorage.setItem('hotel_name', document.getElementById('hotelName').value);
+            document.getElementById('hotelAddress').onchange = () => localStorage.setItem('hotel_address', document.getElementById('hotelAddress').value);
+            document.getElementById('hotelDates').onchange = () => localStorage.setItem('hotel_dates', document.getElementById('hotelDates').value);
+            document.getElementById('hotelNotes').onchange = () => localStorage.setItem('hotel_notes', document.getElementById('hotelNotes').value);
+        }
+        
+        // ========== СПИСОК ВЕЩЕЙ ==========
+        let checklistItems = [];
+        
+        function loadChecklist() {
+            const saved = localStorage.getItem('packing_list');
+            if (saved) {
+                checklistItems = JSON.parse(saved);
+            } else {
+                checklistItems = [
+                    { text: 'Паспорт', checked: false },
+                    { text: 'Билеты', checked: false },
+                    { text: 'Зарядное устройство', checked: false }
+                ];
+            }
+            renderChecklist();
+        }
+        
+        function renderChecklist() {
+            const container = document.getElementById('checklist');
+            container.innerHTML = '';
+            checklistItems.forEach((item, idx) => {
+                const div = document.createElement('div');
+                div.className = 'checklist-item';
+                
+                const circle = document.createElement('div');
+                circle.className = 'checklist-circle' + (item.checked ? ' checked' : '');
+                circle.onclick = () => {
+                    checklistItems[idx].checked = !checklistItems[idx].checked;
+                    saveChecklist();
+                    renderChecklist();
+                };
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = item.text;
+                input.className = 'checklist-text';
+                input.onchange = (e) => {
+                    checklistItems[idx].text = e.target.value;
+                    saveChecklist();
+                };
+                
+                const del = document.createElement('span');
+                del.textContent = '✖';
+                del.className = 'delete-item';
+                del.onclick = () => {
+                    checklistItems.splice(idx, 1);
+                    saveChecklist();
+                    renderChecklist();
+                };
+                
+                div.appendChild(circle);
+                div.appendChild(input);
+                div.appendChild(del);
+                container.appendChild(div);
+            });
+        }
+        
+        function addChecklistItem() {
+            checklistItems.push({ text: 'Новая вещь', checked: false });
+            saveChecklist();
+            renderChecklist();
+        }
+        
+        function saveChecklist() {
+            localStorage.setItem('packing_list', JSON.stringify(checklistItems));
+        }
+        
+        // ========== ФИНАНСЫ ==========
+        let financeRows = [];
+        
+        function loadFinance() {
+            const saved = localStorage.getItem('finance_rows');
+            if (saved) {
+                financeRows = JSON.parse(saved);
+            } else {
+                financeRows = [
+                    { category: 'Билеты', amount: 0 },
+                    { category: 'Отель', amount: 0 }
+                ];
+            }
+            renderFinance();
+        }
+        
+        function renderFinance() {
+            const tbody = document.getElementById('financeBody');
+            tbody.innerHTML = '';
+            let total = 0;
+            financeRows.forEach((row, idx) => {
+                const tr = document.createElement('tr');
+                const tdCat = document.createElement('td');
+                const catInput = document.createElement('input');
+                catInput.type = 'text';
+                catInput.value = row.category;
+                catInput.onchange = (e) => {
+                    financeRows[idx].category = e.target.value;
+                    saveFinance();
+                };
+                tdCat.appendChild(catInput);
+                
+                const tdAmt = document.createElement('td');
+                const amtInput = document.createElement('input');
+                amtInput.type = 'number';
+                amtInput.value = row.amount;
+                amtInput.onchange = (e) => {
+                    financeRows[idx].amount = parseFloat(e.target.value) || 0;
+                    saveFinance();
+                    renderFinance();
+                };
+                tdAmt.appendChild(amtInput);
+                
+                const tdDel = document.createElement('td');
+                const delSpan = document.createElement('span');
+                delSpan.textContent = '✖';
+                delSpan.className = 'delete-item';
+                delSpan.onclick = () => {
+                    financeRows.splice(idx, 1);
+                    saveFinance();
+                    renderFinance();
+                };
+                tdDel.appendChild(delSpan);
+                
+                tr.appendChild(tdCat);
+                tr.appendChild(tdAmt);
+                tr.appendChild(tdDel);
+                tbody.appendChild(tr);
+                total += row.amount;
+            });
+            document.getElementById('totalSum').textContent = total + ' ₽';
+        }
+        
+        function addFinanceRow() {
+            financeRows.push({ category: 'Новый расход', amount: 0 });
+            saveFinance();
+            renderFinance();
+        }
+        
+        function saveFinance() {
+            localStorage.setItem('finance_rows', JSON.stringify(financeRows));
+        }
+        
+        function deleteFinanceRow(element) {
+            // Удаление строки через кнопку
+            const row = element.closest('tr');
+            const index = Array.from(row.parentNode.children).indexOf(row);
+            if (index < financeRows.length) {
+                financeRows.splice(index, 1);
+                saveFinance();
+                renderFinance();
+            }
+        }
+        
+        // ========== ОТКРЫТИЕ/ЗАКРЫТИЕ ПАПОК ==========
+        document.querySelectorAll('.folder').forEach(folder => {
+            const header = folder.querySelector('.folder-header');
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                folder.classList.toggle('open');
+            });
+        });
+        
+        // Загрузка всех данных
+        loadTicketsData();
+        loadHotelData();
+        loadChecklist();
+        loadFinance();
+    </script>
+</body>
+</html>
